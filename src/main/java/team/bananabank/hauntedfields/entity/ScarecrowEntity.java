@@ -53,11 +53,14 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
     }
 
     private <E extends IAnimatable> PlayState predicate(AnimationEvent<E> event) {
-        if(getLevel().isNight()) {
+        long dayTime = getLevel().getDayTime();
+
+        if (dayTime > 13000L && dayTime < 23999L) {
             event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.scarecrow.idle_night", true));
-            return PlayState.CONTINUE;
+        } else {
+            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.scarecrow.idle_day", true));
         }
-        event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.scarecrow.idle_day", true));
+
         return PlayState.CONTINUE;
     }
 
