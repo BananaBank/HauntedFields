@@ -12,6 +12,7 @@ import net.minecraft.world.entity.animal.Bee;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
@@ -110,64 +111,73 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
         }
 
 
+
         @Override
         public boolean requiresUpdateEveryTick() {
             return true;
         }
 
-        @Override
-        public void tick() {
-            // Mostly from bee class BeeGrowCropGoal class.
+        /**
+         * Mostly copied from BeeGrowCropGoal
+         * @param blockstate
+         * @param block
+         * @param blockPos
+         * @return t/f if plant was successfully aged
+         */
+        private boolean tryPlantGrow(BlockState blockstate, Block block, BlockPos blockPos) {
+            boolean flag = false;
+            IntegerProperty integerproperty = null;
 
-            if (ScarecrowEntity.this.random.nextDouble() <= this.probability) {
-                BlockPos blockpos = ScarecrowEntity.this.blockPosition();
-                BlockState blockstate = ScarecrowEntity.this.level.getBlockState(blockpos);
-                Block block = blockstate.getBlock();
 
-                // Deal with bug where block at entity position was counting the farmland below
-                BlockPos blockposAbove = ScarecrowEntity.this.blockPosition().above();
-                BlockState blockstateAbove = ScarecrowEntity.this.level.getBlockState(blockposAbove);
-                Block blockAbove = blockstateAbove.getBlock();
-
-                if (block instanceof FarmBlock) {
-                    blockpos = blockposAbove;
-                    blockstate = blockstateAbove;
-                    block = blockAbove;
+            if (blockstate.is(BlockTags.BEE_GROWABLES)) {
+                if (block instanceof CropBlock) {
+                    CropBlock cropblock = (CropBlock) block;
+                    if (!cropblock.isMaxAge(blockstate)) {
+                        flag = true;
+                        integerproperty = cropblock.getAgeProperty();
+                    }
+                } else if (block instanceof StemBlock) {
+                    int j = blockstate.getValue(StemBlock.AGE);
+                    if (j < 7) {
+                        flag = true;
+                        integerproperty = StemBlock.AGE;
+                    }
+                } else if (blockstate.is(Blocks.SWEET_BERRY_BUSH)) {
+                    int k = blockstate.getValue(SweetBerryBushBlock.AGE);
+                    if (k < 3) {
+                        flag = true;
+                        integerproperty = SweetBerryBushBlock.AGE;
+                    }
+                } else if (blockstate.is(Blocks.CAVE_VINES) || blockstate.is(Blocks.CAVE_VINES_PLANT)) {
+                    ((BonemealableBlock) blockstate.getBlock()).performBonemeal((ServerLevel) ScarecrowEntity.this.level, ScarecrowEntity.this.random, blockPos, blockstate);
                 }
 
-                boolean flag = false;
-                IntegerProperty integerproperty = null;
+                if (flag) {
+                    ScarecrowEntity.this.level.levelEvent(2005, blockPos, 0);
+                    ScarecrowEntity.this.level.setBlockAndUpdate(blockPos, blockstate.setValue(integerproperty, Integer.valueOf(blockstate.getValue(integerproperty) + 1)));
+                    return true;
+                }
+            }
+            return false;
+        }
 
+        @Override
+        public void tick() {
+            BlockPos scarecrowPos = ScarecrowEntity.this.blockPosition();
+            BlockState blockstate;
+            Block block;
 
-                if (blockstate.is(BlockTags.BEE_GROWABLES)) {
-                    if (block instanceof CropBlock) {
-                        CropBlock cropblock = (CropBlock) block;
-                        if (!cropblock.isMaxAge(blockstate)) {
-                            flag = true;
-                            integerproperty = cropblock.getAgeProperty();
-                        }
-                    } else if (block instanceof StemBlock) {
-                        int j = blockstate.getValue(StemBlock.AGE);
-                        if (j < 7) {
-                            flag = true;
-                            integerproperty = StemBlock.AGE;
-                        }
-                    } else if (blockstate.is(Blocks.SWEET_BERRY_BUSH)) {
-                        int k = blockstate.getValue(SweetBerryBushBlock.AGE);
-                        if (k < 3) {
-                            flag = true;
-                            integerproperty = SweetBerryBushBlock.AGE;
-                        }
-                    } else if (blockstate.is(Blocks.CAVE_VINES) || blockstate.is(Blocks.CAVE_VINES_PLANT)) {
-                        ((BonemealableBlock) blockstate.getBlock()).performBonemeal((ServerLevel) ScarecrowEntity.this.level, ScarecrowEntity.this.random, blockpos, blockstate);
-                    }
-
-                    if (flag) {
-                        ScarecrowEntity.this.level.levelEvent(2005, blockpos, 0);
-                        ScarecrowEntity.this.level.setBlockAndUpdate(blockpos, blockstate.setValue(integerproperty, Integer.valueOf(blockstate.getValue(integerproperty) + 1)));
+            // From isNearWater() in FarmBlock.java
+            for(BlockPos posInRange : BlockPos.betweenClosed(scarecrowPos.offset(-4, 0, -4), scarecrowPos.offset(4, 1, 4))) {
+                if (ScarecrowEntity.this.random.nextDouble() <= this.probability) {
+                    blockstate = ScarecrowEntity.this.level.getBlockState(posInRange);
+                    block = blockstate.getBlock();
+                    if (tryPlantGrow(blockstate, block, posInRange)) {
+                        return; // Back out of method if plant is successfully grown. Therefore, only one plant will be able to grow per tick.
                     }
                 }
             }
         }
     }
 }
+
