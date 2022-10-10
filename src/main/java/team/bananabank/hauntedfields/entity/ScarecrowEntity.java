@@ -96,7 +96,7 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
         }
     }
 
-    private class BenefitCropsGoal extends Goal {
+    private static class BenefitCropsGoal extends Goal {
         protected final PathfinderMob mob;
         protected final double probability;
 
@@ -110,13 +110,6 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
             return !isNightTime(mob.level);
         }
 
-
-
-        @Override
-        public boolean requiresUpdateEveryTick() {
-            return true;
-        }
-
         /**
          * Mostly copied from BeeGrowCropGoal
          * @param blockstate
@@ -127,8 +120,6 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
         private boolean tryPlantGrow(BlockState blockstate, Block block, BlockPos blockPos) {
             boolean flag = false;
             IntegerProperty integerproperty = null;
-
-
             if (blockstate.is(BlockTags.BEE_GROWABLES)) {
                 if (block instanceof CropBlock) {
                     CropBlock cropblock = (CropBlock) block;
@@ -149,12 +140,12 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
                         integerproperty = SweetBerryBushBlock.AGE;
                     }
                 } else if (blockstate.is(Blocks.CAVE_VINES) || blockstate.is(Blocks.CAVE_VINES_PLANT)) {
-                    ((BonemealableBlock) blockstate.getBlock()).performBonemeal((ServerLevel) ScarecrowEntity.this.level, ScarecrowEntity.this.random, blockPos, blockstate);
+                    ((BonemealableBlock) blockstate.getBlock()).performBonemeal((ServerLevel) mob.level, mob.getRandom(), blockPos, blockstate);
                 }
 
                 if (flag) {
-                    ScarecrowEntity.this.level.levelEvent(2005, blockPos, 0);
-                    ScarecrowEntity.this.level.setBlockAndUpdate(blockPos, blockstate.setValue(integerproperty, Integer.valueOf(blockstate.getValue(integerproperty) + 1)));
+                    mob.level.levelEvent(2005, blockPos, 0);
+                    mob.level.setBlockAndUpdate(blockPos, blockstate.setValue(integerproperty, Integer.valueOf(blockstate.getValue(integerproperty) + 1)));
                     return true;
                 }
             }
@@ -163,14 +154,14 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
 
         @Override
         public void tick() {
-            BlockPos scarecrowPos = ScarecrowEntity.this.blockPosition();
+            BlockPos scarecrowPos = mob.blockPosition();
             BlockState blockstate;
             Block block;
 
             // From isNearWater() in FarmBlock.java
-            for(BlockPos posInRange : BlockPos.betweenClosed(scarecrowPos.offset(-4, 0, -4), scarecrowPos.offset(4, 1, 4))) {
-                if (ScarecrowEntity.this.random.nextDouble() <= this.probability) {
-                    blockstate = ScarecrowEntity.this.level.getBlockState(posInRange);
+            for (BlockPos posInRange : BlockPos.betweenClosed(scarecrowPos.offset(-4, 0, -4), scarecrowPos.offset(4, 1, 4))) {
+                if (mob.getRandom().nextDouble() <= this.probability) {
+                    blockstate = mob.level.getBlockState(posInRange);
                     block = blockstate.getBlock();
                     if (tryPlantGrow(blockstate, block, posInRange)) {
                         return; // Back out of method if plant is successfully grown. Therefore, only one plant will be able to grow per tick.
