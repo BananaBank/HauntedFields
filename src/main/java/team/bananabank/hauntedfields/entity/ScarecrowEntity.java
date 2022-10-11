@@ -1,8 +1,10 @@
 package team.bananabank.hauntedfields.entity;
 
+import com.google.common.collect.Iterables;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -26,6 +28,7 @@ import software.bernie.geckolib3.core.manager.AnimationData;
 import software.bernie.geckolib3.core.manager.AnimationFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class ScarecrowEntity extends Monster implements IAnimatable {
     private AnimationFactory factory = new AnimationFactory(this);
@@ -100,9 +103,12 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
         protected final PathfinderMob mob;
         protected final double probability;
 
+        /**
+         * @param mob
+         * @param probability Probability that per tick a crop will grow
+         */
         public BenefitCropsGoal(PathfinderMob mob, double probability) {
             this.mob = mob;
-            // How often will scarecrow as % decimal
             this.probability = probability;
         }
         @Override
@@ -154,13 +160,14 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
 
         @Override
         public void tick() {
-            BlockPos scarecrowPos = mob.blockPosition();
-            BlockState blockstate;
-            Block block;
+            if (mob.getRandom().nextDouble() <= this.probability) {
+                BlockPos scarecrowPos = mob.blockPosition();
+                BlockState blockstate;
+                Block block;
 
-            // From isNearWater() in FarmBlock.java
-            for (BlockPos posInRange : BlockPos.betweenClosed(scarecrowPos.offset(-4, 0, -4), scarecrowPos.offset(4, 1, 4))) {
-                if (mob.getRandom().nextDouble() <= this.probability) {
+                // From isNearWater() in FarmBlock.java
+                // randomInCube(random, blocks verticle from center, center pos, blocks horizontal from center)
+                for (BlockPos posInRange : randomInCubeBelow(mob.getRandom(), scarecrowPos, 4)) {
                     blockstate = mob.level.getBlockState(posInRange);
                     block = blockstate.getBlock();
                     if (tryPlantGrow(blockstate, block, posInRange)) {
@@ -168,6 +175,15 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
                     }
                 }
             }
+        }
+
+        /**
+         * From BlockPos.randomInCube(). Changed to limit the cube to only at and below the center position
+         * Scarecrow would not be able to scare birds from crops that are above it.
+         */
+        public static Iterable<BlockPos> randomInCubeBelow(RandomSource random, BlockPos center, int span) {
+            int count = (int) (Math.pow((span * 2) + 1, 3) / 2); // We want half as many blocks in the whole cube because we are only interested in blocks below the scarecrow.
+            return BlockPos.randomBetweenClosed(random, count, center.getX() - span, center.getY() - span, center.getZ() - span, center.getX() + span, center.getY(), center.getZ() + span);
         }
     }
 }
