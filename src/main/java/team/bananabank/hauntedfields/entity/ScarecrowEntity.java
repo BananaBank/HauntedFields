@@ -1,13 +1,24 @@
 package team.bananabank.hauntedfields.entity;
 
+import com.google.common.collect.Iterables;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
+import net.minecraft.world.entity.animal.Bee;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.entity.EntityAccess;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.PlayState;
 import software.bernie.geckolib3.core.builder.AnimationBuilder;
@@ -15,6 +26,9 @@ import software.bernie.geckolib3.core.controller.AnimationController;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
 import software.bernie.geckolib3.core.manager.AnimationFactory;
+
+import java.util.ArrayList;
+import java.util.Collections;
 
 public class ScarecrowEntity extends Monster implements IAnimatable {
     private AnimationFactory factory = new AnimationFactory(this);
@@ -40,6 +54,7 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
         //this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0D, false));
         //this.goalSelector.addGoal(6, new MoveThroughVillageGoal(this, 1.0D, true, 4, () -> true));
         this.goalSelector.addGoal(7, new ScarecrowEntity.MoveRandomlyGoal(this, 1.0D));
+        this.goalSelector.addGoal(7, new BenefitCropsGoal(this, 0.1D));
         //this.targetSelector.addGoal(1, (new HurtByTargetGoal(this)).setAlertOthers(ZombifiedPiglin.class)); // Add nearby crows if added to mod
         //this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
         //this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, AbstractVillager.class, false));
@@ -83,4 +98,93 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
             return super.canUse() && !isNightTime(mob.level);
         }
     }
+
+    private static class BenefitCropsGoal extends Goal {
+        protected final PathfinderMob mob;
+        protected final double probability;
+
+        /**
+         * @param mob
+         * @param probability Probability that per tick a crop will grow
+         */
+        public BenefitCropsGoal(PathfinderMob mob, double probability) {
+            this.mob = mob;
+            this.probability = probability;
+        }
+        @Override
+        public boolean canUse() {
+            return !isNightTime(mob.level);
+        }
+
+        /**
+         * Mostly copied from BeeGrowCropGoal
+         * @param blockstate
+         * @param block
+         * @param blockPos
+         * @return t/f if plant was successfully aged
+         */
+        private boolean tryPlantGrow(BlockState blockstate, Block block, BlockPos blockPos) {
+            boolean flag = false;
+            IntegerProperty integerproperty = null;
+            if (blockstate.is(BlockTags.BEE_GROWABLES)) {
+                if (block instanceof CropBlock) {
+                    CropBlock cropblock = (CropBlock) block;
+                    if (!cropblock.isMaxAge(blockstate)) {
+                        flag = true;
+                        integerproperty = cropblock.getAgeProperty();
+                    }
+                } else if (block instanceof StemBlock) {
+                    int j = blockstate.getValue(StemBlock.AGE);
+                    if (j < 7) {
+                        flag = true;
+                        integerproperty = StemBlock.AGE;
+                    }
+                } else if (blockstate.is(Blocks.SWEET_BERRY_BUSH)) {
+                    int k = blockstate.getValue(SweetBerryBushBlock.AGE);
+                    if (k < 3) {
+                        flag = true;
+                        integerproperty = SweetBerryBushBlock.AGE;
+                    }
+                } else if (blockstate.is(Blocks.CAVE_VINES) || blockstate.is(Blocks.CAVE_VINES_PLANT)) {
+                    ((BonemealableBlock) blockstate.getBlock()).performBonemeal((ServerLevel) mob.level, mob.getRandom(), blockPos, blockstate);
+                }
+
+                if (flag) {
+                    mob.level.levelEvent(2005, blockPos, 0);
+                    mob.level.setBlockAndUpdate(blockPos, blockstate.setValue(integerproperty, Integer.valueOf(blockstate.getValue(integerproperty) + 1)));
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public void tick() {
+            if (mob.getRandom().nextDouble() <= this.probability) {
+                BlockPos scarecrowPos = mob.blockPosition();
+                BlockState blockstate;
+                Block block;
+
+                // From isNearWater() in FarmBlock.java
+                // randomInCube(random, blocks verticle from center, center pos, blocks horizontal from center)
+                for (BlockPos posInRange : randomInCubeBelow(mob.getRandom(), scarecrowPos, 4)) {
+                    blockstate = mob.level.getBlockState(posInRange);
+                    block = blockstate.getBlock();
+                    if (tryPlantGrow(blockstate, block, posInRange)) {
+                        return; // Back out of method if plant is successfully grown. Therefore, only one plant will be able to grow per tick.
+                    }
+                }
+            }
+        }
+
+        /**
+         * From BlockPos.randomInCube(). Changed to limit the cube to only at and below the center position
+         * Scarecrow would not be able to scare birds from crops that are above it.
+         */
+        public static Iterable<BlockPos> randomInCubeBelow(RandomSource random, BlockPos center, int span) {
+            int count = (int) (Math.pow((span * 2) + 1, 3) / 2); // We want half as many blocks in the whole cube because we are only interested in blocks below the scarecrow.
+            return BlockPos.randomBetweenClosed(random, count, center.getX() - span, center.getY() - span, center.getZ() - span, center.getX() + span, center.getY(), center.getZ() + span);
+        }
+    }
 }
+
