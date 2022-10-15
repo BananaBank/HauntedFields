@@ -13,5 +13,6 @@ public class HEventBusEvents {
     @SubscribeEvent
     public static void entityAttributeEvent(EntityAttributeCreationEvent event) {
         event.put(HEntityTypes.SCARECROW.get(), ScarecrowEntity.setAttributes());
+        event.put(HEntityTypes.CROW.get(), ScarecrowEntity.setAttributes());
     }
 }
