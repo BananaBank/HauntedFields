@@ -44,6 +44,8 @@ public class CrowEntity extends Monster implements IAnimatable, FlyingAnimal {
     }
 
     private <E extends IAnimatable> PlayState predicate(AnimationEvent<E> event) {
+
+
         return PlayState.CONTINUE;
     }
 
@@ -54,7 +56,7 @@ public class CrowEntity extends Monster implements IAnimatable, FlyingAnimal {
 
     @Override
     public AnimationFactory getFactory() {
-        return null;
+        return this.factory;
     }
 
     @Override
