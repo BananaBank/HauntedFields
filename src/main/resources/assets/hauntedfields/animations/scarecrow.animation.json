@@ -29,7 +29,7 @@
 		"animation.scarecrow.idle_day": {
 			"animation_length": 2,
 			"bones": {
-				"arm2": {
+				"left_arm": {
 					"rotation": {
 						"0.0": {
 							"vector": [0, 0, 0]
