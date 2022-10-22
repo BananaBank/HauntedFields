@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -40,12 +41,20 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
     Vec3 moveTargetPoint = Vec3.ZERO;
     BlockPos anchorPoint = BlockPos.ZERO;
     private AnimationFactory factory = new AnimationFactory(this);
+    private ScarecrowEntity scarecrow;
 
     CrowEntity.AttackPhase attackPhase = CrowEntity.AttackPhase.CIRCLE;
+
 
     public CrowEntity(EntityType<? extends CrowEntity> entityType, Level level) {
         super(entityType, level);
         this.moveControl = new CrowMoveControl(this);
+    }
+
+    public CrowEntity(EntityType<? extends CrowEntity> entityType, ScarecrowEntity scarecrow, Level level) {
+        super(entityType, level);
+        this.moveControl = new CrowMoveControl(this);
+        this.scarecrow = scarecrow;
     }
 
     public static AttributeSupplier createAttributes() {
@@ -90,7 +99,11 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
         return this.factory;
     }
 
-
+    @Override
+    public void die(DamageSource p_21014_) {
+        super.die(p_21014_);
+        this.scarecrow.crowDeath();
+    }
 
     static enum AttackPhase {
         CIRCLE,
