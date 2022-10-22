@@ -1,6 +1,5 @@
 package team.bananabank.hauntedfields.entity;
 
-import com.google.common.collect.Iterables;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
@@ -10,17 +9,13 @@ import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
-import net.minecraft.world.entity.animal.Bee;
 import net.minecraft.world.entity.monster.Evoker;
 import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.monster.SpellcasterIllager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
-import net.minecraft.world.level.entity.EntityAccess;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.PlayState;
 import software.bernie.geckolib3.core.builder.AnimationBuilder;
@@ -28,15 +23,15 @@ import software.bernie.geckolib3.core.controller.AnimationController;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
 import software.bernie.geckolib3.core.manager.AnimationFactory;
-
-import java.util.ArrayList;
-import java.util.Collections;
+import team.bananabank.hauntedfields.registry.HEntityTypes;
 
 public class ScarecrowEntity extends Monster implements IAnimatable {
     private AnimationFactory factory = new AnimationFactory(this);
+    private int activeCrows;
 
     public ScarecrowEntity(EntityType<? extends Monster> entityType, Level level) {
         super(entityType, level);
+        this.activeCrows = 0;
     }
 
     public static AttributeSupplier setAttributes() {
@@ -57,6 +52,7 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
         //this.goalSelector.addGoal(6, new MoveThroughVillageGoal(this, 1.0D, true, 4, () -> true));
         this.goalSelector.addGoal(7, new ScarecrowEntity.MoveRandomlyGoal(this, 1.0D));
         this.goalSelector.addGoal(7, new BenefitCropsGoal(this, 0.1D));
+        this.goalSelector.addGoal(7, new SpawnCrowsGoal(this));
         //this.targetSelector.addGoal(1, (new HurtByTargetGoal(this)).setAlertOthers(ZombifiedPiglin.class)); // Add nearby crows if added to mod
         //this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
         //this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, AbstractVillager.class, false));
@@ -90,6 +86,16 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
         return dayTime > 13000L && dayTime < 23999L;
     }
 
+    public boolean canSpawnCrow() {
+        return this.activeCrows < 5;
+    }
+
+    public void crowDeath() {
+        if(this.activeCrows != 0) {
+            this.activeCrows--;
+        }
+    }
+
     private static class MoveRandomlyGoal extends WaterAvoidingRandomStrollGoal {
         public MoveRandomlyGoal(PathfinderMob mob, double probability) {
             super(mob, probability);
@@ -98,6 +104,30 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
         @Override
         public boolean canUse() {
             return super.canUse() && !isNightTime(mob.level);
+        }
+    }
+
+    private class SpawnCrowsGoal extends Goal {
+
+        protected final ScarecrowEntity mob;
+
+        private SpawnCrowsGoal(ScarecrowEntity mob) {
+            this.mob = mob;
+        }
+
+        @Override
+        public void start() {
+            BlockPos blockPos = mob.blockPosition().offset(0, 0, 15);
+            CrowEntity crow = HEntityTypes.CROW.get().create(mob.level);
+            crow.setScarecrow(mob);
+            ServerLevel serverLevel = (ServerLevel)mob.level;
+            crow.moveTo(blockPos, 0.0f, 0.0f);
+            serverLevel.addFreshEntity(crow);
+        }
+
+        @Override
+        public boolean canUse() {
+            return isNightTime(mob.level) && canSpawnCrow();
         }
     }
 
