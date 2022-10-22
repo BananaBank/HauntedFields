@@ -21,7 +21,7 @@ public class HEntityTypes {
                     .build(new ResourceLocation(HauntedFields.ID, "scarecrow").toString()));
 
     public static final RegistryObject<EntityType<CrowEntity>> CROW =
-            REGISTRY.register("crow", () -> EntityType.Builder.of(CrowEntity::new, MobCategory.MONSTER)
+            REGISTRY.register("crow", () -> EntityType.Builder.<CrowEntity>of(CrowEntity::new, MobCategory.MONSTER)
                     .sized(0.5F, 0.9F) // matching parrot
                     .build(new ResourceLocation(HauntedFields.ID, "crow").toString()));
 
