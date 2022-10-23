@@ -21,6 +21,12 @@ Spooky scarecrows O_o
     ordering="NONE"
     side="BOTH"
 [[dependencies.hauntedfields]]
+    modId="geckolib"
+    mandatory=true
+    versionRange="[3.1,)"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.hauntedfields]]
     modId="minecraft"
     mandatory=true
     versionRange="[1.19.2,1.20)"
