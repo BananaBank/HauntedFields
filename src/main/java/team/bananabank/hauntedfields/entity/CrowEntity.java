@@ -37,14 +37,11 @@ import java.util.EnumSet;
 import java.util.List;
 
 public class CrowEntity extends FlyingMob implements IAnimatable {
-
-    Vec3 moveTargetPoint = Vec3.ZERO;
-    BlockPos anchorPoint = BlockPos.ZERO;
-    private AnimationFactory factory = new AnimationFactory(this);
+    private Vec3 moveTargetPoint = Vec3.ZERO;
+    private BlockPos anchorPoint = BlockPos.ZERO;
+    private final AnimationFactory factory = new AnimationFactory(this);
     private ScarecrowEntity scarecrow;
-
-    CrowEntity.AttackPhase attackPhase = CrowEntity.AttackPhase.CIRCLE;
-
+    private CrowEntity.AttackPhase attackPhase = CrowEntity.AttackPhase.CIRCLE;
 
     public CrowEntity(EntityType<? extends CrowEntity> entityType, Level level) {
         super(entityType, level);
@@ -69,8 +66,6 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
     }
 
     protected void registerGoals() {
-        //this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        //this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
         this.goalSelector.addGoal(5, new CrowEntity.CrowCircleAroundAnchorGoal(this));
 
         this.goalSelector.addGoal(1, new CrowEntity.CrowAttackStrategyGoal(this));
@@ -81,21 +76,21 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
 
     @Override
     protected PathNavigation createNavigation(Level level) {
-        FlyingPathNavigation flyingpathnavigation = new FlyingPathNavigation(this, level);
-        flyingpathnavigation.setCanOpenDoors(false);
-        flyingpathnavigation.setCanFloat(true);
-        flyingpathnavigation.setCanPassDoors(true);
-        return flyingpathnavigation;
+        FlyingPathNavigation navigation = new FlyingPathNavigation(this, level);
+        navigation.setCanOpenDoors(false);
+        navigation.setCanFloat(true);
+        navigation.setCanPassDoors(true);
+        return navigation;
     }
 
-    private <E extends IAnimatable> PlayState predicate(AnimationEvent<E> event) {
+    private PlayState predicate(AnimationEvent<CrowEntity> event) {
         // Add animations here
         return PlayState.CONTINUE;
     }
 
     @Override
     public void registerControllers(AnimationData data) {
-        data.addAnimationController(new AnimationController(this, "controller", 0, this::predicate));
+        data.addAnimationController(new AnimationController<>(this, "controller", 0, this::predicate));
     }
 
     @Override
@@ -106,56 +101,52 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
     @Override
     public void die(DamageSource p_21014_) {
         super.die(p_21014_);
-        //this.scarecrow.crowDeath();
     }
 
-    static enum AttackPhase {
+    enum AttackPhase {
         CIRCLE,
         SWOOP;
     }
 
-    static class CrowAttackPlayerTargetGoal extends Goal {
-
-        private CrowEntity crow;
+    private static class CrowAttackPlayerTargetGoal extends Goal {
+        private final CrowEntity crow;
         private final TargetingConditions attackTargeting = TargetingConditions.forCombat().range(64.0D);
         private int nextScanTick = reducedTickDelay(20);
 
         public CrowAttackPlayerTargetGoal(CrowEntity crow) {
-            super();
             this.crow = crow;
         }
 
         public boolean canUse() {
-            if (this.nextScanTick > 0) {
+            if (nextScanTick > 0) {
                 --this.nextScanTick;
-                return false;
             } else {
-                this.nextScanTick = reducedTickDelay(60);
-                List<Player> list = crow.level.getNearbyPlayers(this.attackTargeting, crow, crow.getBoundingBox().inflate(16.0D, 64.0D, 16.0D));
+                nextScanTick = reducedTickDelay(60);
+                List<Player> list = crow.level.getNearbyPlayers(attackTargeting, crow, crow.getBoundingBox().inflate(16.0D, 64.0D, 16.0D));
+
                 if (!list.isEmpty()) {
                     list.sort(Comparator.<Entity, Double>comparing(Entity::getY).reversed());
 
-                    for(Player player : list) {
+                    for (Player player : list) {
                         if (crow.canAttack(player, TargetingConditions.DEFAULT)) {
                             crow.setTarget(player);
                             return true;
                         }
                     }
                 }
-
-                return false;
             }
+
+            return false;
         }
 
         public boolean canContinueToUse() {
             LivingEntity livingentity = crow.getTarget();
-            return livingentity != null ? crow.canAttack(livingentity, TargetingConditions.DEFAULT) : false;
+            return livingentity != null && crow.canAttack(livingentity, TargetingConditions.DEFAULT);
         }
     }
 
-    static class CrowAttackStrategyGoal extends Goal {
-
-        private CrowEntity crow;
+    private static class CrowAttackStrategyGoal extends Goal {
+        private final CrowEntity crow;
         private int nextSweepTick;
 
         public CrowAttackStrategyGoal(CrowEntity crow) {
@@ -164,8 +155,8 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
         }
 
         public boolean canUse() {
-            LivingEntity livingentity = crow.getTarget();
-            return livingentity != null ? crow.canAttack(livingentity, TargetingConditions.DEFAULT) : false;
+            LivingEntity target = crow.getTarget();
+            return target != null && crow.canAttack(target, TargetingConditions.DEFAULT);
         }
 
         public void start() {
@@ -201,9 +192,8 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
     }
 
     // From Phantom
-    static class CrowMoveControl extends MoveControl {
-
-        private CrowEntity crow;
+    private static class CrowMoveControl extends MoveControl {
+        private final CrowEntity crow;
         private float speed;
 
         public CrowMoveControl(CrowEntity crow) {
@@ -252,8 +242,7 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
     }
 
     // From Phantom
-    abstract static class CrowMoveTargetGoal extends Goal {
-
+    private abstract static class CrowMoveTargetGoal extends Goal {
         protected CrowEntity crow;
         public CrowMoveTargetGoal(CrowEntity crow) {
             this.crow = crow;
@@ -266,7 +255,7 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
     }
 
     // From Phantom
-    static class CrowCircleAroundAnchorGoal extends CrowEntity.CrowMoveTargetGoal {
+    private static class CrowCircleAroundAnchorGoal extends CrowEntity.CrowMoveTargetGoal {
         private float angle;
         private float distance;
         private float height;
@@ -318,7 +307,6 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
                 this.height = Math.min(-1.0F, this.height);
                 this.selectNext();
             }
-
         }
 
         private void selectNext() {
@@ -331,9 +319,7 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
         }
     }
 
-    static class CrowSweepAttackGoal extends CrowEntity.CrowMoveTargetGoal {
-
-
+    private static class CrowSweepAttackGoal extends CrowEntity.CrowMoveTargetGoal {
         private static final int CAT_SEARCH_TICK_DELAY = 20;
         private boolean isScaredOfCat;
         private int catSearchTick;
@@ -348,13 +334,13 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
 
         public boolean canContinueToUse() {
             LivingEntity livingentity = crow.getTarget();
+
             if (livingentity == null) {
                 return false;
             } else if (!livingentity.isAlive()) {
                 return false;
             } else {
-                if (livingentity instanceof Player) {
-                    Player player = (Player)livingentity;
+                if (livingentity instanceof Player player) {
                     if (livingentity.isSpectator() || player.isCreative()) {
                         return false;
                     }
@@ -383,15 +369,16 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
         }
 
         public void stop() {
-            crow.setTarget((LivingEntity)null);
+            crow.setTarget(null);
             crow.attackPhase = CrowEntity.AttackPhase.CIRCLE;
         }
 
         public void tick() {
             LivingEntity livingentity = crow.getTarget();
+
             if (livingentity != null) {
                 crow.moveTargetPoint = new Vec3(livingentity.getX(), livingentity.getY(0.5D), livingentity.getZ());
-                if (crow.getBoundingBox().inflate((double)0.2F).intersects(livingentity.getBoundingBox())) {
+                if (crow.getBoundingBox().inflate(0.2F).intersects(livingentity.getBoundingBox())) {
                     crow.doHurtTarget(livingentity);
                     crow.attackPhase = CrowEntity.AttackPhase.CIRCLE;
                     if (!crow.isSilent()) {
@@ -400,7 +387,6 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
                 } else if (crow.horizontalCollision || crow.hurtTime > 0) {
                     crow.attackPhase = CrowEntity.AttackPhase.CIRCLE;
                 }
-
             }
         }
     }

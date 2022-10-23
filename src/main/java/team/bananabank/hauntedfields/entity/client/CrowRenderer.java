@@ -12,7 +12,6 @@ import team.bananabank.hauntedfields.HauntedFields;
 import team.bananabank.hauntedfields.entity.CrowEntity;
 
 public class CrowRenderer extends GeoEntityRenderer<CrowEntity> {
-
     public CrowRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new CrowModel());
         this.shadowRadius = 0.3F; // match parrot
@@ -24,13 +23,7 @@ public class CrowRenderer extends GeoEntityRenderer<CrowEntity> {
     }
 
     @Override
-    public RenderType getRenderType(CrowEntity animatable,
-                                    float partialTicks,
-                                    PoseStack stack,
-                                    @Nullable MultiBufferSource renderTypeBuffer,
-                                    @Nullable VertexConsumer vertexBuilder,
-                                    int packedLightIn,
-                                    ResourceLocation textureLocation) {
+    public RenderType getRenderType(CrowEntity animatable, float partialTicks, PoseStack stack, @Nullable MultiBufferSource renderTypeBuffer, @Nullable VertexConsumer vertexBuilder, int packedLightIn, ResourceLocation textureLocation) {
         stack.scale(1.0f, 1.0f, 1.0f);
         return super.getRenderType(animatable, partialTicks, stack, renderTypeBuffer, vertexBuilder, packedLightIn, textureLocation);
     }

@@ -24,13 +24,7 @@ public class ScarecrowRenderer extends GeoEntityRenderer<ScarecrowEntity> {
     }
 
     @Override
-    public RenderType getRenderType(ScarecrowEntity animatable,
-                                    float partialTicks,
-                                    PoseStack stack,
-                                    @Nullable MultiBufferSource renderTypeBuffer,
-                                    @Nullable VertexConsumer vertexBuilder,
-                                    int packedLightIn,
-                                    ResourceLocation textureLocation) {
+    public RenderType getRenderType(ScarecrowEntity animatable, float partialTicks, PoseStack stack, @Nullable MultiBufferSource renderTypeBuffer, @Nullable VertexConsumer vertexBuilder, int packedLightIn, ResourceLocation textureLocation) {
         stack.scale(1.0f, 1.0f, 1.0f);
         return super.getRenderType(animatable, partialTicks, stack, renderTypeBuffer, vertexBuilder, packedLightIn, textureLocation);
     }

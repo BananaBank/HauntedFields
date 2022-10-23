@@ -9,7 +9,6 @@ import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
-import net.minecraft.world.entity.monster.Evoker;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -19,6 +18,7 @@ import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.PlayState;
 import software.bernie.geckolib3.core.builder.AnimationBuilder;
+import software.bernie.geckolib3.core.builder.ILoopType;
 import software.bernie.geckolib3.core.controller.AnimationController;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
@@ -26,7 +26,7 @@ import software.bernie.geckolib3.core.manager.AnimationFactory;
 import team.bananabank.hauntedfields.registry.HEntityTypes;
 
 public class ScarecrowEntity extends Monster implements IAnimatable {
-    private AnimationFactory factory = new AnimationFactory(this);
+    private final AnimationFactory factory = new AnimationFactory(this);
     private int activeCrows;
 
     public ScarecrowEntity(EntityType<? extends Monster> entityType, Level level) {
@@ -48,23 +48,16 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
     }
 
     protected void addBehaviorGoals() {
-        //this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0D, false));
-        //this.goalSelector.addGoal(6, new MoveThroughVillageGoal(this, 1.0D, true, 4, () -> true));
         this.goalSelector.addGoal(7, new ScarecrowEntity.MoveRandomlyGoal(this, 1.0D));
         this.goalSelector.addGoal(7, new BenefitCropsGoal(this, 0.1D));
         this.goalSelector.addGoal(7, new SpawnCrowsGoal(this));
-        //this.targetSelector.addGoal(1, (new HurtByTargetGoal(this)).setAlertOthers(ZombifiedPiglin.class)); // Add nearby crows if added to mod
-        //this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
-        //this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, AbstractVillager.class, false));
-        //this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, IronGolem.class, true));
-        //this.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, Turtle.class, 10, true, false, Turtle.BABY_ON_LAND_SELECTOR));
     }
 
-    private <E extends IAnimatable> PlayState predicate(AnimationEvent<E> event) {
+    private PlayState predicate(AnimationEvent<ScarecrowEntity> event) {
         if (isNightTime(level)) {
-            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.scarecrow.idle_night", true));
+            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.scarecrow.idle_night", ILoopType.EDefaultLoopTypes.LOOP));
         } else {
-            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.scarecrow.idle_day", true));
+            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.scarecrow.idle_day", ILoopType.EDefaultLoopTypes.LOOP));
         }
 
         return PlayState.CONTINUE;
@@ -72,7 +65,7 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
 
     @Override
     public void registerControllers(AnimationData data) {
-        data.addAnimationController(new AnimationController(this, "controller", 0, this::predicate));
+        data.addAnimationController(new AnimationController<>(this, "controller", 0, this::predicate));
     }
 
     @Override
@@ -91,7 +84,7 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
     }
 
     public void crowDeath() {
-        if(this.activeCrows != 0) {
+        if (this.activeCrows != 0) {
             this.activeCrows--;
         }
     }
@@ -108,7 +101,6 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
     }
 
     private class SpawnCrowsGoal extends Goal {
-
         protected final ScarecrowEntity mob;
 
         private SpawnCrowsGoal(ScarecrowEntity mob) {
@@ -119,10 +111,10 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
         public void start() {
             BlockPos blockPos = mob.blockPosition().offset(0, 0, 15);
             CrowEntity crow = HEntityTypes.CROW.get().create(mob.level);
+
             crow.setScarecrow(mob);
-            ServerLevel serverLevel = (ServerLevel)mob.level;
             crow.moveTo(blockPos, 0.0f, 0.0f);
-            serverLevel.addFreshEntity(crow);
+            level.addFreshEntity(crow);
         }
 
         @Override
@@ -135,14 +127,11 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
         protected final PathfinderMob mob;
         protected final double probability;
 
-        /**
-         * @param mob
-         * @param probability Probability that per tick a crop will grow
-         */
         public BenefitCropsGoal(PathfinderMob mob, double probability) {
             this.mob = mob;
             this.probability = probability;
         }
+
         @Override
         public boolean canUse() {
             return !isNightTime(mob.level);
@@ -150,29 +139,28 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
 
         /**
          * Mostly copied from BeeGrowCropGoal
-         * @param blockstate
-         * @param block
-         * @param blockPos
-         * @return t/f if plant was successfully aged
+         * @return true if plant was successfully aged
          */
         private boolean tryPlantGrow(BlockState blockstate, Block block, BlockPos blockPos) {
             boolean flag = false;
             IntegerProperty integerproperty = null;
+
             if (blockstate.is(BlockTags.BEE_GROWABLES)) {
-                if (block instanceof CropBlock) {
-                    CropBlock cropblock = (CropBlock) block;
-                    if (!cropblock.isMaxAge(blockstate)) {
+                if (block instanceof CropBlock cropsBlock) {
+                    if (!cropsBlock.isMaxAge(blockstate)) {
                         flag = true;
-                        integerproperty = cropblock.getAgeProperty();
+                        integerproperty = cropsBlock.getAgeProperty();
                     }
                 } else if (block instanceof StemBlock) {
                     int j = blockstate.getValue(StemBlock.AGE);
+
                     if (j < 7) {
                         flag = true;
                         integerproperty = StemBlock.AGE;
                     }
                 } else if (blockstate.is(Blocks.SWEET_BERRY_BUSH)) {
                     int k = blockstate.getValue(SweetBerryBushBlock.AGE);
+
                     if (k < 3) {
                         flag = true;
                         integerproperty = SweetBerryBushBlock.AGE;
@@ -183,10 +171,12 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
 
                 if (flag) {
                     mob.level.levelEvent(2005, blockPos, 0);
-                    mob.level.setBlockAndUpdate(blockPos, blockstate.setValue(integerproperty, Integer.valueOf(blockstate.getValue(integerproperty) + 1)));
+                    mob.level.setBlockAndUpdate(blockPos, blockstate.setValue(integerproperty, blockstate.getValue(integerproperty) + 1));
+
                     return true;
                 }
             }
+
             return false;
         }
 
@@ -198,12 +188,14 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
                 Block block;
 
                 // From isNearWater() in FarmBlock.java
-                // randomInCube(random, blocks verticle from center, center pos, blocks horizontal from center)
+                // randomInCube(random, blocks vertical from center, center pos, blocks horizontal from center)
                 for (BlockPos posInRange : randomInCubeBelow(mob.getRandom(), scarecrowPos, 4)) {
                     blockstate = mob.level.getBlockState(posInRange);
                     block = blockstate.getBlock();
+
                     if (tryPlantGrow(blockstate, block, posInRange)) {
-                        return; // Back out of method if plant is successfully grown. Therefore, only one plant will be able to grow per tick.
+                        // Back out of method if plant is successfully grown. Therefore, only one plant will be able to grow per tick.
+                        return;
                     }
                 }
             }
@@ -214,7 +206,8 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
          * Scarecrow would not be able to scare birds from crops that are above it.
          */
         public static Iterable<BlockPos> randomInCubeBelow(RandomSource random, BlockPos center, int span) {
-            int count = (int) (Math.pow((span * 2) + 1, 3) / 2); // We want half as many blocks in the whole cube because we are only interested in blocks below the scarecrow.
+            // We want half as many blocks in the whole cube because we are only interested in blocks below the scarecrow.
+            int count = (int) (Math.pow((span * 2) + 1, 3) / 2);
             return BlockPos.randomBetweenClosed(random, count, center.getX() - span, center.getY() - span, center.getZ() - span, center.getX() + span, center.getY(), center.getZ() + span);
         }
     }

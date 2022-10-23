@@ -8,9 +8,7 @@ import team.bananabank.hauntedfields.entity.CrowEntity;
 import team.bananabank.hauntedfields.entity.ScarecrowEntity;
 import team.bananabank.hauntedfields.registry.HEntityTypes;
 
-@Mod.EventBusSubscriber(modid = HauntedFields.ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class HEventBusEvents {
-
     @SubscribeEvent
     public static void entityAttributeEvent(EntityAttributeCreationEvent event) {
         event.put(HEntityTypes.SCARECROW.get(), ScarecrowEntity.setAttributes());
