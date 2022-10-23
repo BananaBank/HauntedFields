@@ -3,27 +3,20 @@ package team.bananabank.hauntedfields.entity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.control.FlyingMoveControl;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomFlyingGoal;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.animal.Cat;
 import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.monster.Phantom;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.PlayState;
@@ -72,6 +65,7 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
         this.goalSelector.addGoal(2, new CrowEntity.CrowSweepAttackGoal(this));
         this.goalSelector.addGoal(3, new CrowEntity.CrowCircleAroundAnchorGoal(this));
         this.targetSelector.addGoal(1, new CrowEntity.CrowAttackPlayerTargetGoal(this));
+        this.targetSelector.addGoal(4, new CrowFollowScarecrowGoal(this));
     }
 
     @Override
@@ -101,6 +95,9 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
     @Override
     public void die(DamageSource p_21014_) {
         super.die(p_21014_);
+        if (this.scarecrow != null) {
+            this.scarecrow.crowDeath();
+        }
     }
 
     enum AttackPhase {
@@ -182,12 +179,34 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
 
         }
 
-        private void setAnchorAboveTarget() {
+    private void setAnchorAboveTarget() {
             crow.anchorPoint = crow.getTarget().blockPosition().above(20 + crow.random.nextInt(20));
             if (crow.anchorPoint.getY() < crow.level.getSeaLevel()) {
                 crow.anchorPoint = new BlockPos(crow.anchorPoint.getX(), crow.level.getSeaLevel() + 1, crow.anchorPoint.getZ());
             }
 
+        }
+    }
+
+    private static class CrowFollowScarecrowGoal extends Goal {
+
+        private final CrowEntity crow;
+
+        private CrowFollowScarecrowGoal(CrowEntity crow) {
+            this.crow = crow;
+        }
+
+        @Override
+        public void tick() {
+            crow.anchorPoint = crow.scarecrow.blockPosition().above(20 + crow.random.nextInt(20));
+            if (crow.anchorPoint.getY() < crow.level.getSeaLevel()) {
+                crow.anchorPoint = new BlockPos(crow.anchorPoint.getX(), crow.level.getSeaLevel() + 1, crow.anchorPoint.getZ());
+            };
+        }
+
+        @Override
+        public boolean canUse() {
+            return crow.scarecrow != null;
         }
     }
 
