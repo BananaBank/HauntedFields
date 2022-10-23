@@ -51,6 +51,12 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
         this.moveControl = new CrowMoveControl(this);
     }
 
+    public CrowEntity(EntityType<? extends CrowEntity> entityType, ScarecrowEntity scarecrow, Level level) {
+        super(entityType, level);
+        this.moveControl = new CrowMoveControl(this);
+        this.scarecrow = scarecrow;
+    }
+
     public static AttributeSupplier createAttributes() {
         return Monster.createMonsterAttributes()
                 .add(Attributes.MAX_HEALTH, 6.0D)
@@ -96,11 +102,7 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
     @Override
     public void die(DamageSource p_21014_) {
         super.die(p_21014_);
-        this.scarecrow.crowDeath();
-    }
-
-    public void setScarecrow(ScarecrowEntity scarecrow) {
-        this.scarecrow = scarecrow;
+        //this.scarecrow.crowDeath();
     }
 
     static enum AttackPhase {

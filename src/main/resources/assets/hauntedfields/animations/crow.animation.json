@@ -2,50 +2,84 @@
 	"format_version": "1.8.0",
 	"animations": {
 		"animation.crow.fly": {
-			"animation_length": 1,
+			"loop": true,
+			"animation_length": 2,
 			"bones": {
 				"wing0": {
 					"rotation": {
 						"0.0": {
-							"vector": [0, 0, 0]
+							"vector": [0, -60, -90]
 						},
 						"0.5": {
-							"vector": [0, 0, -135]
+							"vector": [22.02689, -54.493, -116.03073]
 						},
 						"1.0": {
-							"vector": [0, 0, 0]
+							"vector": [0, -60, -90]
+						},
+						"1.5": {
+							"vector": [-46.00521, -52.50553, -36.00521]
+						},
+						"2.0": {
+							"vector": [0, -60, -90]
 						}
 					}
 				},
 				"wing1": {
 					"rotation": {
 						"0.0": {
-							"vector": [0, 0, 0]
+							"vector": [0, 60, 90]
 						},
 						"0.5": {
-							"vector": [0, 0, 135]
+							"vector": [22.02689, 54.493, 116.03073]
 						},
 						"1.0": {
-							"vector": [0, 0, 0]
+							"vector": [0, 60, 90]
+						},
+						"1.5": {
+							"vector": [-46.00521, 52.50553, 36.00521]
+						},
+						"2.0": {
+							"vector": [0, 60, 90]
 						}
 					}
-				}
-			}
-		},
-		"animation.crow.idle": {
-			"animation_length": 2,
-			"bones": {
+				},
 				"head": {
+					"rotation": {
+						"vector": [-35, 0, 0]
+					}
+				},
+				"tail": {
 					"rotation": {
 						"0.0": {
 							"vector": [0, 0, 0]
 						},
+						"0.5": {
+							"vector": [-35, 0, 0]
+						},
 						"1.0": {
-							"vector": [0, 30, 0]
+							"vector": [0, 0, 0]
+						},
+						"1.5": {
+							"vector": [27.5, 0, 0]
 						},
 						"2.0": {
 							"vector": [0, 0, 0]
 						}
+					}
+				},
+				"leg0": {
+					"rotation": {
+						"vector": [50, 0, 0]
+					}
+				},
+				"leg1": {
+					"rotation": {
+						"vector": [50, 0, 0]
+					}
+				},
+				"crow": {
+					"rotation": {
+						"vector": [37.5, 0, 0]
 					}
 				}
 			}
