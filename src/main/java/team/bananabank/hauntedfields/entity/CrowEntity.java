@@ -57,6 +57,10 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
         this.scarecrow = scarecrow;
     }
 
+    public void setScarecrow(ScarecrowEntity scarecrow) {
+        this.scarecrow = scarecrow;
+    }
+
     public static AttributeSupplier createAttributes() {
         return Monster.createMonsterAttributes()
                 .add(Attributes.MAX_HEALTH, 6.0D)
