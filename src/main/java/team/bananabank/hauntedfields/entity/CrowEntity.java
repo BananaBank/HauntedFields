@@ -102,7 +102,7 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
     @Override
     public void die(DamageSource p_21014_) {
         super.die(p_21014_);
-        this.scarecrow.crowDeath();
+        //this.scarecrow.crowDeath();
     }
 
     static enum AttackPhase {
