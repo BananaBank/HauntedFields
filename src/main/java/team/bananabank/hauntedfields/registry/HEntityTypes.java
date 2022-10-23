@@ -9,6 +9,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import team.bananabank.hauntedfields.HauntedFields;
+import team.bananabank.hauntedfields.entity.CrowEntity;
 import team.bananabank.hauntedfields.entity.ScarecrowEntity;
 
 public class HEntityTypes {
@@ -18,5 +19,10 @@ public class HEntityTypes {
             REGISTRY.register("scarecrow", () -> EntityType.Builder.of(ScarecrowEntity::new, MobCategory.MONSTER)
                     .sized(1.0f, 1.0f)
                     .build(new ResourceLocation(HauntedFields.ID, "scarecrow").toString()));
+
+    public static final RegistryObject<EntityType<CrowEntity>> CROW =
+            REGISTRY.register("crow", () -> EntityType.Builder.<CrowEntity>of(CrowEntity::new, MobCategory.MONSTER)
+                    .sized(0.5F, 0.9F) // matching parrot
+                    .build(new ResourceLocation(HauntedFields.ID, "crow").toString()));
 
 }
