@@ -45,10 +45,6 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
     protected void registerGoals() {
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
-        this.addBehaviorGoals();
-    }
-
-    protected void addBehaviorGoals() {
         this.goalSelector.addGoal(7, new ScarecrowEntity.MoveRandomlyGoal(this, 1.0D));
         this.goalSelector.addGoal(7, new BenefitCropsGoal(this, 0.1D));
         this.goalSelector.addGoal(7, new SpawnCrowsGoal(this));
@@ -97,26 +93,34 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
 
         @Override
         public boolean canUse() {
-            return super.canUse() && !isNightTime(mob.level);
+            return super.canUse() && isNightTime(mob.level);
         }
     }
 
     private class SpawnCrowsGoal extends Goal {
         protected final ScarecrowEntity scarecrow;
 
+        protected int counter;
+
         private SpawnCrowsGoal(ScarecrowEntity mob) {
             this.scarecrow = mob;
+            this.counter = 0;
         }
 
         @Override
         public void tick() {
-            BlockPos blockPos = scarecrow.blockPosition().offset(0, 2, 0);
-            CrowEntity crow = HEntityTypes.CROW.get().create(scarecrow.level);
+            if (counter < 350) {
+                this.counter++;
+            } else {
+                BlockPos blockPos = scarecrow.blockPosition().offset(0, 2, 0);
+                CrowEntity crow = HEntityTypes.CROW.get().create(scarecrow.level);
 
-            crow.setScarecrow(scarecrow);
-            crow.moveTo(blockPos, 0.0f, 0.0f);
-            level.addFreshEntity(crow);
-            scarecrow.activeCrows++;
+                crow.setScarecrow(scarecrow);
+                crow.moveTo(blockPos, 0.0f, 0.0f);
+                level.addFreshEntity(crow);
+                scarecrow.activeCrows++;
+                counter = 0;
+            }
         }
 
         @Override
