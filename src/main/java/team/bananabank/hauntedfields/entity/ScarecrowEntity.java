@@ -28,6 +28,7 @@ import team.bananabank.hauntedfields.registry.HEntityTypes;
 public class ScarecrowEntity extends Monster implements IAnimatable {
     private final AnimationFactory factory = new AnimationFactory(this);
     private int activeCrows;
+    private final int MAX_CROWS = 5;
 
     public ScarecrowEntity(EntityType<? extends Monster> entityType, Level level) {
         super(entityType, level);
@@ -44,10 +45,6 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
     protected void registerGoals() {
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
-        this.addBehaviorGoals();
-    }
-
-    protected void addBehaviorGoals() {
         this.goalSelector.addGoal(7, new ScarecrowEntity.MoveRandomlyGoal(this, 1.0D));
         this.goalSelector.addGoal(7, new BenefitCropsGoal(this, 0.1D));
         this.goalSelector.addGoal(7, new SpawnCrowsGoal(this));
@@ -80,7 +77,7 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
     }
 
     public boolean canSpawnCrow() {
-        return this.activeCrows < 5;
+        return this.activeCrows < MAX_CROWS;
     }
 
     public void crowDeath() {
@@ -96,30 +93,39 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
 
         @Override
         public boolean canUse() {
-            return super.canUse() && !isNightTime(mob.level);
+            return super.canUse() && isNightTime(mob.level);
         }
     }
 
     private class SpawnCrowsGoal extends Goal {
-        protected final ScarecrowEntity mob;
+        protected final ScarecrowEntity scarecrow;
+
+        protected int counter;
 
         private SpawnCrowsGoal(ScarecrowEntity mob) {
-            this.mob = mob;
+            this.scarecrow = mob;
+            this.counter = 0;
         }
 
         @Override
-        public void start() {
-            BlockPos blockPos = mob.blockPosition().offset(0, 0, 15);
-            CrowEntity crow = HEntityTypes.CROW.get().create(mob.level);
+        public void tick() {
+            if (counter < 350) {
+                this.counter++;
+            } else {
+                BlockPos blockPos = scarecrow.blockPosition().offset(0, 2, 0);
+                CrowEntity crow = HEntityTypes.CROW.get().create(scarecrow.level);
 
-            crow.setScarecrow(mob);
-            crow.moveTo(blockPos, 0.0f, 0.0f);
-            level.addFreshEntity(crow);
+                crow.setScarecrow(scarecrow);
+                crow.moveTo(blockPos, 0.0f, 0.0f);
+                level.addFreshEntity(crow);
+                scarecrow.activeCrows++;
+                counter = 0;
+            }
         }
 
         @Override
         public boolean canUse() {
-            return isNightTime(mob.level) && canSpawnCrow();
+            return isNightTime(scarecrow.level) && canSpawnCrow();
         }
     }
 
