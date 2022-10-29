@@ -20,6 +20,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.PlayState;
+import software.bernie.geckolib3.core.builder.AnimationBuilder;
 import software.bernie.geckolib3.core.controller.AnimationController;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
@@ -78,7 +79,7 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
     }
 
     private PlayState predicate(AnimationEvent<CrowEntity> event) {
-        // Add animations here
+        event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.crow.fly", true));
         return PlayState.CONTINUE;
     }
 
