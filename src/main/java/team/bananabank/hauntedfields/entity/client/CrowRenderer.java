@@ -10,10 +10,13 @@ import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib3.renderers.geo.GeoEntityRenderer;
 import team.bananabank.hauntedfields.HauntedFields;
 import team.bananabank.hauntedfields.entity.CrowEntity;
+import team.bananabank.hauntedfields.entity.layer.CrowEyesLayer;
+import team.bananabank.hauntedfields.entity.layer.ScarecrowEyesLayer;
 
 public class CrowRenderer extends GeoEntityRenderer<CrowEntity> {
     public CrowRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new CrowModel());
+        this.addLayer(new CrowEyesLayer(this));
         this.shadowRadius = 0.3F; // match parrot
     }
 
