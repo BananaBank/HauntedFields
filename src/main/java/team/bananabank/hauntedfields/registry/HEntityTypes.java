@@ -17,7 +17,7 @@ public class HEntityTypes {
 
     public static final RegistryObject<EntityType<ScarecrowEntity>> SCARECROW =
             REGISTRY.register("scarecrow", () -> EntityType.Builder.of(ScarecrowEntity::new, MobCategory.MONSTER)
-                    .sized(1.0f, 1.0f)
+                    .sized(0.9f, 2.6f)
                     .build(new ResourceLocation(HauntedFields.ID, "scarecrow").toString()));
 
     public static final RegistryObject<EntityType<CrowEntity>> CROW =

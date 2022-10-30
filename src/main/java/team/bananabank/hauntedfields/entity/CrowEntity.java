@@ -1,7 +1,6 @@
 package team.bananabank.hauntedfields.entity;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
@@ -103,7 +102,7 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
 
     enum AttackPhase {
         CIRCLE,
-        SWOOP;
+        SWOOP
     }
 
     private static class CrowAttackPlayerTargetGoal extends Goal {
@@ -174,7 +173,7 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
                     crow.attackPhase = CrowEntity.AttackPhase.SWOOP;
                     this.setAnchorAboveTarget();
                     this.nextSweepTick = this.adjustedTickDelay((8 + crow.random.nextInt(4)) * 20);
-                    crow.playSound(SoundEvents.PHANTOM_SWOOP, 10.0F, 0.95F + crow.random.nextFloat() * 0.1F);
+                    //crow.playSound(SoundEvents.PHANTOM_SWOOP, 10.0F, 0.95F + crow.random.nextFloat() * 0.1F);
                 }
             }
 
