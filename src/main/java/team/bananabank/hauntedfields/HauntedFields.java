@@ -8,7 +8,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import software.bernie.geckolib3.GeckoLib;
 import team.bananabank.hauntedfields.entity.client.CrowRenderer;
 import team.bananabank.hauntedfields.entity.client.ScarecrowRenderer;
-import team.bananabank.hauntedfields.event.HEventBusEvents;
+import team.bananabank.hauntedfields.event.HEvents;
 import team.bananabank.hauntedfields.registry.HEntityTypes;
 import team.bananabank.hauntedfields.registry.HItems;
 
@@ -17,13 +17,15 @@ public class HauntedFields {
     public static final String ID = "hauntedfields";
 
     public HauntedFields() {
+        var fgBus = MinecraftForge.EVENT_BUS;
         var modBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         HEntityTypes.REGISTRY.register(modBus);
         HItems.REGISTRY.register(modBus);
 
         modBus.addListener(this::clientSetup);
-        modBus.addListener(HEventBusEvents::entityAttributeEvent);
+        modBus.addListener(HEvents::entityAttributeEvent);
+        fgBus.addListener(HEvents::blockPlaceEvent);
 
         GeckoLib.initialize();
     }
