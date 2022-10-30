@@ -11,6 +11,7 @@ import team.bananabank.hauntedfields.entity.client.ScarecrowRenderer;
 import team.bananabank.hauntedfields.event.HEvents;
 import team.bananabank.hauntedfields.registry.HEntityTypes;
 import team.bananabank.hauntedfields.registry.HItems;
+import team.bananabank.hauntedfields.registry.HSounds;
 
 @Mod(HauntedFields.ID)
 public class HauntedFields {
@@ -22,6 +23,7 @@ public class HauntedFields {
 
         HEntityTypes.REGISTRY.register(modBus);
         HItems.REGISTRY.register(modBus);
+        HSounds.SOUND_EVENTS.register(modBus);
 
         modBus.addListener(this::clientSetup);
         modBus.addListener(HEvents::entityAttributeEvent);
