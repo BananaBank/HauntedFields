@@ -5,10 +5,14 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -16,19 +20,15 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import software.bernie.geckolib3.core.IAnimatable;
-import software.bernie.geckolib3.core.PlayState;
-import software.bernie.geckolib3.core.builder.AnimationBuilder;
-import software.bernie.geckolib3.core.builder.ILoopType;
-import software.bernie.geckolib3.core.controller.AnimationController;
-import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
 import software.bernie.geckolib3.core.manager.AnimationFactory;
 import team.bananabank.hauntedfields.registry.HEntityTypes;
 
 public class ScarecrowEntity extends Monster implements IAnimatable {
+    private static final int MAX_CROWS = 5;
+
     private final AnimationFactory factory = new AnimationFactory(this);
     private int activeCrows;
-    private final int MAX_CROWS = 5;
 
     public ScarecrowEntity(EntityType<? extends Monster> entityType, Level level) {
         super(entityType, level);
@@ -38,31 +38,23 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
     public static AttributeSupplier setAttributes() {
         return Monster.createMonsterAttributes()
                 .add(Attributes.MAX_HEALTH, 16.0D)
-                .add(Attributes.MOVEMENT_SPEED, (double)0.3F)
+                .add(Attributes.MOVEMENT_SPEED, 0.3F)
                 .build();
     }
 
     protected void registerGoals() {
-        this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
-        this.goalSelector.addGoal(7, new ScarecrowEntity.MoveRandomlyGoal(this, 1.0D));
-        this.goalSelector.addGoal(7, new BenefitCropsGoal(this, 0.1D));
+        this.goalSelector.addGoal(8, new ScarecrowEntity.LookPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(8, new ScarecrowEntity.RandomLookGoal(this));
+        this.goalSelector.addGoal(7, new ScarecrowEntity.MoveRandomlyGoal(this, 1.0));
+        this.goalSelector.addGoal(7, new BenefitCropsGoal(this, 0.1));
         this.goalSelector.addGoal(7, new SpawnCrowsGoal(this));
-    }
 
-    private PlayState predicate(AnimationEvent<ScarecrowEntity> event) {
-        if (isNightTime(level)) {
-            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.scarecrow.idle_night", ILoopType.EDefaultLoopTypes.LOOP));
-        } else {
-            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.scarecrow.idle_day", ILoopType.EDefaultLoopTypes.LOOP));
-        }
-
-        return PlayState.CONTINUE;
+        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
     }
 
     @Override
     public void registerControllers(AnimationData data) {
-        data.addAnimationController(new AnimationController<>(this, "controller", 0, this::predicate));
     }
 
     @Override
@@ -89,6 +81,31 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
     private static class MoveRandomlyGoal extends WaterAvoidingRandomStrollGoal {
         public MoveRandomlyGoal(PathfinderMob mob, double probability) {
             super(mob, probability);
+        }
+
+        @Override
+        public boolean canUse() {
+            return super.canUse() && isNightTime(mob.level);
+        }
+    }
+
+    private static class RandomLookGoal extends RandomLookAroundGoal {
+        private final Mob mob;
+
+        public RandomLookGoal(Mob mob) {
+            super(mob);
+            this.mob = mob;
+        }
+
+        @Override
+        public boolean canUse() {
+            return super.canUse() && isNightTime(mob.level);
+        }
+    }
+
+    private static class LookPlayerGoal extends LookAtPlayerGoal {
+        public LookPlayerGoal(Mob mob, Class<? extends LivingEntity> type, float chance) {
+            super(mob, type, chance);
         }
 
         @Override
