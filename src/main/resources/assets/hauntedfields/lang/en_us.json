@@ -1,4 +1,7 @@
 {
   "item.hauntedfields.scarecrow_spawn_egg": "Scarecrow Spawn Egg",
-  "item.hauntedfields.crow_spawn_egg": "Crow Spawn Egg"
+  "item.hauntedfields.crow_spawn_egg": "Crow Spawn Egg",
+
+  "entity.hauntedfields.crow": "Crow",
+  "entity.hauntedfields.scarecrow": "Scarecrow"
 }

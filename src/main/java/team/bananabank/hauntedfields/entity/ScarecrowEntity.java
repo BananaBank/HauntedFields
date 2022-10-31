@@ -1,7 +1,10 @@
 package team.bananabank.hauntedfields.entity;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.FloatTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntityType;
@@ -19,10 +22,13 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.manager.AnimationData;
 import software.bernie.geckolib3.core.manager.AnimationFactory;
 import team.bananabank.hauntedfields.registry.HEntityTypes;
+
+import java.nio.file.Path;
 
 public class ScarecrowEntity extends Monster implements IAnimatable {
     private static final int MAX_CROWS = 5;
@@ -43,10 +49,12 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
     }
 
     protected void registerGoals() {
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
+        this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.0D, false));
+        this.goalSelector.addGoal(0, new ScarecrowEntity.ScarecrowFloat(this));
         this.goalSelector.addGoal(8, new ScarecrowEntity.LookPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(8, new ScarecrowEntity.RandomLookGoal(this));
-        this.goalSelector.addGoal(7, new ScarecrowEntity.MoveRandomlyGoal(this, 1.0));
-        this.goalSelector.addGoal(7, new BenefitCropsGoal(this, 0.1));
+        this.goalSelector.addGoal(7, new BenefitCropsGoal(this, 0.05));
         this.goalSelector.addGoal(7, new SpawnCrowsGoal(this));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
@@ -76,6 +84,12 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
         if (this.activeCrows != 0) {
             this.activeCrows--;
         }
+    }
+
+    @Nullable
+    @Override
+    protected SoundEvent getAmbientSound() {
+        return isNightTime(this.level) ? SoundEvents.ZOMBIE_VILLAGER_AMBIENT : null;
     }
 
     private static class MoveRandomlyGoal extends WaterAvoidingRandomStrollGoal {
@@ -238,5 +252,18 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
             return BlockPos.randomBetweenClosed(random, count, center.getX() - span, center.getY() - span, center.getZ() - span, center.getX() + span, center.getY(), center.getZ() + span);
         }
     }
+    private static class ScarecrowFloat extends FloatGoal {
+        protected final Mob mob;
+        public ScarecrowFloat(Mob mob) {
+            super(mob);
+            this.mob = mob;
+        }
+
+        @Override
+        public boolean canUse() {
+            return super.canUse() && isNightTime(this.mob.level);
+        }
+    }
+
 }
 
