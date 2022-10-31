@@ -1,0 +1,17 @@
+{
+  "crow_caw": {
+    "subtitle" : "hauntedfields.crow_caw",
+    "sounds" : [
+      "hauntedfields:crow_caw"
+    ]
+  },
+
+  "swoop": {
+    "subtitle" : "hauntedfields.swoop",
+    "sounds" : [
+      "hauntedfields:swoop1",
+      "hauntedfields:swoop2",
+      "hauntedfields:swoop3"
+    ]
+  }
+}
