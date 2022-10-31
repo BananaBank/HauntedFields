@@ -165,38 +165,42 @@ public class ScarecrowEntity extends Monster implements IAnimatable {
          * @return true if plant was successfully aged
          */
         private boolean tryPlantGrow(BlockState blockstate, Block block, BlockPos blockPos) {
-            boolean flag = false;
+            boolean canGrow = false;
             IntegerProperty integerproperty = null;
 
             if (blockstate.is(BlockTags.BEE_GROWABLES)) {
                 if (block instanceof CropBlock cropsBlock) {
                     if (!cropsBlock.isMaxAge(blockstate)) {
-                        flag = true;
+                        canGrow = true;
                         integerproperty = cropsBlock.getAgeProperty();
                     }
                 } else if (block instanceof StemBlock) {
                     int j = blockstate.getValue(StemBlock.AGE);
 
                     if (j < 7) {
-                        flag = true;
+                        canGrow = true;
                         integerproperty = StemBlock.AGE;
                     }
                 } else if (blockstate.is(Blocks.SWEET_BERRY_BUSH)) {
                     int k = blockstate.getValue(SweetBerryBushBlock.AGE);
 
                     if (k < 3) {
-                        flag = true;
+                        canGrow = true;
                         integerproperty = SweetBerryBushBlock.AGE;
                     }
                 } else if (blockstate.is(Blocks.CAVE_VINES) || blockstate.is(Blocks.CAVE_VINES_PLANT)) {
                     ((BonemealableBlock) blockstate.getBlock()).performBonemeal((ServerLevel) mob.level, mob.getRandom(), blockPos, blockstate);
                 }
 
-                if (flag) {
-                    mob.level.levelEvent(2005, blockPos, 0);
-                    mob.level.setBlockAndUpdate(blockPos, blockstate.setValue(integerproperty, blockstate.getValue(integerproperty) + 1));
+                if (canGrow) {
+                    int others = mob.level.getEntities(mob, mob.getBoundingBox().inflate(3.0, 1.0, 3.0), ScarecrowEntity.class::isInstance).size();
 
-                    return true;
+                    if (others == 0 || mob.getRandom().nextInt(1 + others * 2) < 1) {
+                        mob.level.levelEvent(2005, blockPos, 0);
+                        mob.level.setBlockAndUpdate(blockPos, blockstate.setValue(integerproperty, blockstate.getValue(integerproperty) + 1));
+
+                        return true;
+                    }
                 }
             }
 
