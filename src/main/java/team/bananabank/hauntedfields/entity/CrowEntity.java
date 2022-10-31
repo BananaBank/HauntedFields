@@ -411,9 +411,9 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
                 if (crow.getBoundingBox().inflate(0.2F).intersects(livingentity.getBoundingBox())) {
                     crow.doHurtTarget(livingentity);
                     crow.attackPhase = CrowEntity.AttackPhase.CIRCLE;
-                    if (!crow.isSilent()) {
-                        crow.level.levelEvent(1039, crow.blockPosition(), 0);
-                    }
+//                    if (!crow.isSilent()) {
+//                        crow.level.levelEvent(1039, crow.blockPosition(), 0);
+//                    }
                 } else if (crow.horizontalCollision || crow.hurtTime > 0) {
                     crow.attackPhase = CrowEntity.AttackPhase.CIRCLE;
                 }
