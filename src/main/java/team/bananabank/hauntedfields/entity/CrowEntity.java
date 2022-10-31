@@ -1,6 +1,8 @@
 package team.bananabank.hauntedfields.entity;
 
 import net.minecraft.core.BlockPos;
+
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
@@ -17,6 +19,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.PlayState;
 import software.bernie.geckolib3.core.builder.AnimationBuilder;
@@ -24,7 +27,9 @@ import software.bernie.geckolib3.core.controller.AnimationController;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
 import software.bernie.geckolib3.core.manager.AnimationFactory;
+import team.bananabank.hauntedfields.registry.HSounds;
 
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
@@ -92,6 +97,18 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
         if (this.scarecrow != null) {
             this.scarecrow.crowDeath();
         }
+    }
+
+    @Nullable
+    @Override
+    protected SoundEvent getAmbientSound() {
+        return HSounds.CROW_CAW.get();
+    }
+
+    @Nullable
+    @Override
+    protected SoundEvent getHurtSound(DamageSource p_21239_) {
+        return HSounds.CROW_CAW.get();
     }
 
     enum AttackPhase {
@@ -167,10 +184,9 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
                     crow.attackPhase = CrowEntity.AttackPhase.SWOOP;
                     this.setAnchorAboveTarget();
                     this.nextSweepTick = this.adjustedTickDelay((8 + crow.random.nextInt(4)) * 20);
-                    //crow.playSound(SoundEvents.PHANTOM_SWOOP, 10.0F, 0.95F + crow.random.nextFloat() * 0.1F);
+                    crow.playSound(HSounds.SWOOP.get(), 10.0F, 0.95F + crow.random.nextFloat() * 0.1F);
                 }
             }
-
         }
 
     private void setAnchorAboveTarget() {
