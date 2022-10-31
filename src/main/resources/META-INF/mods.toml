@@ -7,7 +7,7 @@ issueTrackerURL="https://github.com/BananaBank/HauntedFields/issues/"
 modId="hauntedfields"
 version="${file.jarVersion}"
 displayName="Haunted Fields"
-credits="The exaggerated swagger of the Rusty Team"
+credits="The exaggerated swagger of the Rusty Team. Sounds by https://quicksounds.com"
 authors="TheDarkColour, cfrishausen, bobertrd"
 
 description='''
