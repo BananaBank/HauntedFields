@@ -187,6 +187,7 @@ public class CrowEntity extends FlyingMob implements IAnimatable {
                     crow.playSound(HSounds.SWOOP.get(), 10.0F, 0.95F + crow.random.nextFloat() * 0.1F);
                 }
             }
+
         }
 
     private void setAnchorAboveTarget() {
